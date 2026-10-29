@@ -112,6 +112,58 @@ Check 'finished notifications can be turned off' `
     '{"hook_event_name":"Stop","cwd":"C:\\code\\my-app"}' `
     @{ CLAUDE_NOTIFY_ON_DONE = '0' }
 
+# CheckXml <name> <json> <scriptblock receiving the parsed toast XML; returns $true when it's right>
+function CheckXml([string]$Name, [string]$Json, [scriptblock]$Assert, [hashtable]$Environment = @{}) {
+    $Environment['CLAUDE_NOTIFY_DRY_RUN'] = 'xml'
+    foreach ($key in $Environment.Keys) { Set-Item "env:$key" $Environment[$key] }
+    try {
+        $output = ($Json | & $shell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $script) -join "`n"
+    } finally {
+        foreach ($key in $Environment.Keys) { Remove-Item "env:$key" }
+    }
+    $ok = $false
+    try { $ok = & $Assert ([xml]$output) } catch { }
+    if ($ok) {
+        $script:pass++
+        Write-Output "ok   $Name"
+    } else {
+        $script:fail++
+        Write-Output "FAIL $Name"
+        Write-Output "     toast XML: $output"
+    }
+}
+
+CheckXml 'toast has title, subtitle and message lines, and the sound' `
+    "{`"hook_event_name`":`"Stop`",`"cwd`":`"C:\\code\\my-app`",`"transcript_path`":`"$fixtures/transcript-ai-title.jsonl`"}" `
+    {
+        param($x)
+        $texts = @($x.toast.visual.binding.text)
+        $x.toast.visual.binding.template -eq 'ToastGeneric' -and
+        $texts.Count -eq 3 -and
+        $texts[0] -ceq 'Claude Code · my-app' -and
+        $texts[1] -ceq 'Conversation: Fix login redirect' -and
+        $texts[2] -ceq '✅ Finished — ready for your next message' -and
+        $x.toast.audio.src -eq 'ms-winsoundevent:Notification.Default'
+    }
+
+CheckXml 'toast without a conversation has two lines' `
+    '{"hook_event_name":"Stop","cwd":"C:\\code\\my-app"}' `
+    { param($x) @($x.toast.visual.binding.text).Count -eq 2 }
+
+CheckXml 'XML special characters are escaped and survive parsing' `
+    '{"hook_event_name":"Notification","notification_type":"permission_prompt","message":"Allow \"rm <x> & y\" in C:\\tmp''s dir?","cwd":"C:\\code\\my-app"}' `
+    { param($x) @($x.toast.visual.binding.text)[1] -ceq '🔐 Allow "rm <x> & y" in C:\tmp''s dir?' }
+
+CheckXml 'silent sound mutes the toast' `
+    '{"hook_event_name":"Stop","cwd":"C:\\code\\my-app"}' `
+    { param($x) $x.toast.audio.silent -eq 'true' } `
+    @{ CLAUDE_NOTIFY_SOUND_DONE = 'none' }
+
+CheckXml 'an invalid sound name leaves out the audio element, so Windows plays its default' `
+    '{"hook_event_name":"Stop","cwd":"C:\\code\\my-app"}' `
+    { param($x) $x.toast.visual -and -not $x.toast.audio } `
+    @{ CLAUDE_NOTIFY_SOUND_DONE = 'x"/><evil' }
+
 Write-Output ''
 Write-Output "$($script:pass) passed, $($script:fail) failed"
 if ($script:fail -gt 0) { exit 1 }
