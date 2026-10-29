@@ -44,7 +44,18 @@ If nothing appears:
 
 ## Settings
 
-Set these as environment variables in the `env` section of `%USERPROFILE%\.claude\settings.json`:
+To turn sounds on or off or change them, use the `/windows-notifications:sound` command in Claude Code:
+
+```
+/windows-notifications:sound              show the current sounds and the ones available
+/windows-notifications:sound off          turn all sounds off
+/windows-notifications:sound on           go back to the default sounds
+/windows-notifications:sound test         send a test notification with each current sound
+/windows-notifications:sound done Mail    change the "finished" sound
+/windows-notifications:sound input off    turn off only the "needs input" sound
+```
+
+The command edits the settings below for you. To set them by hand, add them as environment variables in the `env` section of `%USERPROFILE%\.claude\settings.json`:
 
 ```json
 {
