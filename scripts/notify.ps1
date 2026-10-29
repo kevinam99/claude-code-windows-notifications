@@ -6,7 +6,8 @@
 #   CLAUDE_NOTIFY_SOUND_DONE   sound when a response finishes (default Default, "none" for silent)
 #   CLAUDE_NOTIFY_SOUND_INPUT  sound when input is needed (default IM, "none" for silent)
 #   CLAUDE_NOTIFY_ON_DONE      set to 0 to skip "finished" notifications
-#   CLAUDE_NOTIFY_DRY_RUN      set to 1 to print "title|subtitle|message|sound" instead of notifying
+#   CLAUDE_NOTIFY_DRY_RUN      set to 1 to print "title|subtitle|message|sound", or to xml to print
+#                              the toast XML, instead of notifying
 #
 # This file is plain ASCII on purpose: Windows PowerShell 5.1 reads files without a BOM
 # in the legacy ANSI code page, so non-ASCII characters are built from code points.
@@ -95,7 +96,7 @@ function Get-Description($HookInput) {
     return @('input', "$Bell $message")
 }
 
-function Show-Toast([string]$Title, [string]$Subtitle, [string]$Message, [string]$Sound) {
+function New-ToastXml([string]$Title, [string]$Subtitle, [string]$Message, [string]$Sound) {
     $lines = @($Title, $Subtitle, $Message) | Where-Object { $_ } |
         ForEach-Object { '<text>' + [Security.SecurityElement]::Escape($_) + '</text>' }
     if (-not $Sound) {
@@ -103,14 +104,17 @@ function Show-Toast([string]$Title, [string]$Subtitle, [string]$Message, [string
     } elseif ($Sound -match '^[A-Za-z]+$') {
         $audio = '<audio src="ms-winsoundevent:Notification.' + $Sound + '"/>'
     } else {
+        # Without an audio element, Windows plays its default notification sound.
         $audio = ''
     }
-    $xml = '<toast><visual><binding template="ToastGeneric">' + ($lines -join '') + '</binding></visual>' + $audio + '</toast>'
+    return '<toast><visual><binding template="ToastGeneric">' + ($lines -join '') + '</binding></visual>' + $audio + '</toast>'
+}
 
+function Show-Toast([string]$Xml) {
     [void][Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]
     [void][Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]
     $document = New-Object Windows.Data.Xml.Dom.XmlDocument
-    $document.LoadXml($xml)
+    $document.LoadXml($Xml)
     $toast = New-Object Windows.UI.Notifications.ToastNotification $document
     [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($AppId).Show($toast)
 }
@@ -132,13 +136,18 @@ try {
         $sound = Get-SoundSetting 'CLAUDE_NOTIFY_SOUND_INPUT' 'IM'
     }
 
-    if ($env:CLAUDE_NOTIFY_DRY_RUN -eq '1') {
+    $xml = New-ToastXml $title $subtitle $text $sound
+    if ($env:CLAUDE_NOTIFY_DRY_RUN -eq '1' -or $env:CLAUDE_NOTIFY_DRY_RUN -eq 'xml') {
         [Console]::OutputEncoding = New-Object Text.UTF8Encoding $false
-        [Console]::Out.WriteLine(($title, $subtitle, $text, $sound) -join '|')
+        if ($env:CLAUDE_NOTIFY_DRY_RUN -eq 'xml') {
+            [Console]::Out.WriteLine($xml)
+        } else {
+            [Console]::Out.WriteLine(($title, $subtitle, $text, $sound) -join '|')
+        }
         exit 0
     }
 
-    Show-Toast $title $subtitle $text $sound
+    Show-Toast $xml
 } catch {
     # A notification must never break Claude Code's hook run.
 }
