@@ -1,0 +1,14 @@
+{
+  "name": "claude-code-windows-notifications",
+  "owner": {
+    "name": "Kevin Mathew",
+    "url": "https://github.com/kevinam99"
+  },
+  "plugins": [
+    {
+      "name": "windows-notifications",
+      "source": "./",
+      "description": "Windows toast notifications when Claude Code finishes a response or needs your input, labelled with the project and conversation."
+    }
+  ]
+}
