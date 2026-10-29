@@ -129,6 +129,13 @@ docker run --rm -v "$PWD":/w -w /w mcr.microsoft.com/dotnet/sdk:8.0 pwsh -NoProf
 
 `tests/run.ps1` is saved as UTF-8 with a BOM so Windows PowerShell 5.1 reads its emoji correctly; keep the BOM if you edit it. `scripts/notify.ps1` is plain ASCII for the same reason.
 
+## Other platforms
+
+The same notifications are also available for other systems:
+
+- **macOS:** [claude-code-macos-notifications](https://github.com/kevinam99/claude-code-macos-notifications)
+- **Linux:** [claude-code-linux-notifications](https://github.com/kevinam99/claude-code-linux-notifications)
+
 ## License
 
 [MIT](LICENSE)
