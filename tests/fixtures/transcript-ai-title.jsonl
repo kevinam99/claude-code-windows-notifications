@@ -1,0 +1,4 @@
+{"type":"user","message":{"role":"user","content":"hi"}}
+{"type":"ai-title","aiTitle":"Old title","sessionId":"s1"}
+{"type":"assistant","message":{"role":"assistant","content":"hello"}}
+{"type":"ai-title","aiTitle":"Fix login redirect","sessionId":"s1"}
