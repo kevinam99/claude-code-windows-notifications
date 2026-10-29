@@ -51,6 +51,7 @@ To turn sounds on or off or change them, use the `/windows-notifications:sound` 
 /windows-notifications:sound off          turn all sounds off
 /windows-notifications:sound on           go back to the default sounds
 /windows-notifications:sound test         send a test notification with each current sound
+/windows-notifications:sound preview Mail hear a sound without changing anything
 /windows-notifications:sound done Mail    change the "finished" sound
 /windows-notifications:sound input off    turn off only the "needs input" sound
 ```

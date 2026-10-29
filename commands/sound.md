@@ -1,6 +1,6 @@
 ---
-description: Turn notification sounds on or off, change them, or test them
-argument-hint: "[on | off | test | done <sound> | input <sound>]"
+description: Turn notification sounds on or off, change, test or preview them
+argument-hint: "[on | off | test | preview <sound> | done <sound> | input <sound>]"
 ---
 
 Change the notification sounds of the windows-notifications plugin. Arguments: `$ARGUMENTS`
@@ -18,6 +18,7 @@ Do what the arguments ask:
 - **`off`:** set both variables to `none`.
 - **`on`:** remove both variables, so the defaults apply again.
 - **`test`:** change nothing, and send one test notification with each current sound, as described below. Read the current values from the settings file rather than this session's environment, and use the default for an unset one. Skip a sound that is `none` and say it's off.
+- **`preview <sound>`:** change nothing, and send one test notification with that sound, as described below, so I can hear it. Check the name as described below; without a name, list the available sounds.
 - **`done <sound>`** or **`input <sound>`:** set that one variable. `<sound>` can be `off` (store `none`), `default` (remove the variable), or a sound name.
 - **Anything else:** show the usage line and change nothing.
 
